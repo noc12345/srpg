@@ -43,8 +43,8 @@
         const guiElement = document.getElementById('gui');
         const closeGuiButton = document.getElementById('closeGui');
         const grid = [];
-        const rows = 5;
-        const cols = 11;
+        const rows = 10;
+        const cols = 22;
         let playerPosition = { x: 5, y: 2 }; // Updated starting position
         const specialPosition = { x: 5, y: 3 }; // Special character position
 
@@ -91,6 +91,7 @@
 
         closeGuiButton.addEventListener('click', () => {
             guiElement.style.display = 'none'; // Hide GUI when button is clicked
+            gold += math.floor(math.random() * 7 + 1);
         });
 
         window.addEventListener('keydown', (event) => {
