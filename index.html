@@ -18,6 +18,7 @@
             font-size: 24px;
             line-height: 1;
             position: relative;
+            margin-right: 120px; /* Adjust margin to make room for the gold display */
         }
         #gui {
             display: none; /* Hidden by default */
@@ -31,18 +32,20 @@
             z-index: 1000;
         }
         #gold {
-            position: absolute;
+            position: fixed;
             top: 10px;
             right: 20px;
             font-size: 18px;
             color: #333;
+            z-index: 1001; /* Ensure it's above the game grid */
         }
     </style>
 </head>
 <body>
     <div id="game">
-        <div id="gold">Gold: 0</div> <!-- Display the gold here -->
+        <!-- The game grid will be updated here -->
     </div>
+    <div id="gold">Gold: 0</div> <!-- Display the gold here, fixed to the top-right -->
     <div id="gui">
         <h2>Special GUI</h2>
         <p>You found a chest!</p>
