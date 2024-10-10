@@ -39,49 +39,76 @@
             color: #333;
             z-index: 1001; /* Ensure it's above the game grid */
         }
+        #combatGui {
+            display: none; /* Hidden by default */
+            position: fixed;
+            top: 40%;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: white;
+            border: 1px solid black;
+            padding: 20px;
+            z-index: 1000;
+        }
     </style>
 </head>
 <body>
-    <div id="game">
-        <!-- The game grid will be updated here -->
-    </div>
+    <div id="game"></div>
     <div id="gold">Gold: 0</div> <!-- Display the gold here, fixed to the top-right -->
     <div id="gui">
         <h2>Special GUI</h2>
         <p>You found a chest!</p>
         <button id="closeGui">Loot</button>
     </div>
+    <div id="combatGui">
+        <h2>Combat GUI</h2>
+        <p>@       < R </p>
+        <button id="attackButton">Attack</button>
+        <button id="dodgeButton">Dodge</button>
+    </div>
     <script>
         const gameElement = document.getElementById('game');
         const guiElement = document.getElementById('gui');
+        const combatGuiElement = document.getElementById('combatGui');
         const closeGuiButton = document.getElementById('closeGui');
+        const attackButton = document.getElementById('attackButton');
+        const dodgeButton = document.getElementById('dodgeButton');
         const goldElement = document.getElementById('gold');
         const grid = [];
         const rows = 10;
         const cols = 22;
         let playerPosition = { x: 5, y: 2 }; // Updated starting position
         let chestPosition = { x: 5, y: 3 }; // Chest position
+        let skeletonPosition = { x: 8, y: 4 }; // Skeleton starting position
         let gold = 0; // Gold variable
+        let playerHp = 10; // Player health
+        let skeletonHp = 10; // Skeleton health
+        let isPlayerDodging = false; // Player dodge state
+        let attackInProgress = false; // Prevent multiple attacks at once
+        let attackDirection = ''; // '<' or '>'
 
         function initGrid() {
             for (let i = 0; i < rows; i++) {
                 grid[i] = Array(cols).fill('-');
             }
             grid[chestPosition.y][chestPosition.x] = '#'; // Place chest at initial position
+            grid[skeletonPosition.y][skeletonPosition.x] = 'R'; // Place skeleton
             updateGrid();
         }
 
         function updateGrid() {
-            // Clear grid and place player
+            // Clear grid and place player and skeleton
             for (let i = 0; i < rows; i++) {
                 grid[i].fill('-');
             }
             grid[playerPosition.y][playerPosition.x] = '@'; // Place player
+            grid[skeletonPosition.y][skeletonPosition.x] = 'R'; // Place skeleton
             if (chestPosition.x !== -1 && chestPosition.y !== -1) {
                 grid[chestPosition.y][chestPosition.x] = '#'; // Place chest
             }
             gameElement.textContent = grid.map(row => row.join('')).join('\n');
             checkSpecialInteraction(); // Check for interaction
+            checkCombatInteraction(); // Check for combat interaction
         }
 
         function movePlayer(dx, dy) {
@@ -94,28 +121,94 @@
             }
         }
 
+        function moveSkeleton() {
+            let dx = 0;
+            let dy = 0;
+            if (skeletonPosition.x < playerPosition.x) dx = 1;
+            if (skeletonPosition.x > playerPosition.x) dx = -1;
+            if (skeletonPosition.y < playerPosition.y) dy = 1;
+            if (skeletonPosition.y > playerPosition.y) dy = -1;
+
+            // Prevent skeleton from overlapping player
+            if (skeletonPosition.x + dx === playerPosition.x && skeletonPosition.y + dy === playerPosition.y) {
+                return;
+            }
+
+            skeletonPosition.x += dx;
+            skeletonPosition.y += dy;
+            updateGrid();
+        }
+
         function checkSpecialInteraction() {
             const isNearChest =
                 (playerPosition.x === chestPosition.x && Math.abs(playerPosition.y - chestPosition.y) <= 1) ||
                 (playerPosition.y === chestPosition.y && Math.abs(playerPosition.x - chestPosition.x) <= 1);
 
             if (isNearChest) {
-                guiElement.style.display = 'block'; // Show GUI
+                guiElement.style.display = 'block'; // Show GUI for chest
             } else {
                 guiElement.style.display = 'none'; // Hide GUI
             }
         }
 
-        closeGuiButton.addEventListener('click', () => {
-            if (chestPosition.x !== -1 && chestPosition.y !== -1) { // Check if chest exists
-                chestPosition = { x: -1, y: -1 }; // Destroy chest
-                gold += Math.floor(Math.random() * 7 + 1); // Add random gold
-                goldElement.textContent = `Gold: ${gold}`; // Update gold display
-                updateGrid();
-            }
-            guiElement.style.display = 'none'; // Hide GUI when button is clicked
-        });
+        function checkCombatInteraction() {
+            const isNearSkeleton =
+                (playerPosition.x === skeletonPosition.x && Math.abs(playerPosition.y - skeletonPosition.y) <= 1) ||
+                (playerPosition.y === skeletonPosition.y && Math.abs(playerPosition.x - skeletonPosition.x) <= 1);
 
+            if (isNearSkeleton && playerHp > 0 && skeletonHp > 0) {
+                combatGuiElement.style.display = 'block'; // Show combat GUI
+            } else {
+                combatGuiElement.style.display = 'none'; // Hide combat GUI
+            }
+        }
+
+        function handleAttack() {
+            if (attackInProgress) return;
+            attackInProgress = true;
+            attackDirection = '>';
+            setTimeout(() => {
+                if (skeletonHp > 0 && skeletonPosition.x === playerPosition.x && skeletonPosition.y === playerPosition.y) {
+                    skeletonHp -= 2; // Player attacks skeleton
+                    updateCombatGui();
+                }
+                attackInProgress = false;
+            }, 200); // 0.2 seconds delay for attack
+        }
+
+        function handleDodge() {
+            isPlayerDodging = true;
+            setTimeout(() => {
+                isPlayerDodging = false;
+            }, 200); // 0.2 seconds dodge window
+        }
+
+        function skeletonAttack() {
+            if (attackDirection === '<' && !isPlayerDodging) {
+                playerHp -= 2; // Skeleton attacks player
+                updateCombatGui();
+            }
+        }
+
+        function updateCombatGui() {
+            // Display current HP and attack/dodge options
+            combatGuiElement.innerHTML = `<h2>Combat GUI</h2><p>@       < R </p><p>Player HP: ${playerHp} - Skeleton HP: ${skeletonHp}</p>`;
+        }
+
+        // Combat button actions
+        attackButton.addEventListener('click', handleAttack);
+        dodgeButton.addEventListener('click', handleDodge);
+
+        // Simulate skeleton's slow movement and attack
+        setInterval(() => {
+            if (skeletonHp > 0 && playerHp > 0) {
+                moveSkeleton(); // Move skeleton
+                skeletonAttack(); // Skeleton attacks every 0.5 seconds
+                updateCombatGui(); // Update combat UI
+            }
+        }, 500); // 0.5 second interval for skeleton's action
+
+        // Game controls
         window.addEventListener('keydown', (event) => {
             switch (event.key) {
                 case 'ArrowUp':
@@ -133,7 +226,9 @@
             }
         });
 
+        // Initialize game
         initGrid();
     </script>
 </body>
 </html>
+
