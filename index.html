@@ -43,10 +43,10 @@
         const guiElement = document.getElementById('gui');
         const closeGuiButton = document.getElementById('closeGui');
         const grid = [];
-        const rows = 50;
-        const cols = 50;
-        let playerPosition = { x: 2, y: 2 }; // Updated starting position
-        const specialPosition = { x: 5, y: 5 }; // Special character position
+        const rows = 5;
+        const cols = 11;
+        let playerPosition = { x: 5, y: 2 }; // Updated starting position
+        const specialPosition = { x: 5, y: 3 }; // Special character position
 
         function initGrid() {
             for (let i = 0; i < rows; i++) {
@@ -62,7 +62,7 @@
                 grid[i].fill('-');
             }
             grid[playerPosition.y][playerPosition.x] = '@';
-            grid[specialPosition.y][specialPosition.x] = '*'; // Keep special character
+            grid[specialPosition.y][specialPosition.x] = '#'; // Keep special character
             gameElement.textContent = grid.map(row => row.join('')).join('\n');
             checkSpecialInteraction(); // Check interaction every update
         }
