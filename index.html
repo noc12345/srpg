@@ -67,4 +67,178 @@
         <button id="closeGui">Loot</button>
     </div>
     <div id="enemyGui">
-        <h2>Skeleton Encounte
+        <h2>Skeleton Encounter</h2>
+        <p>Skeleton is near!</p>
+        <button id="attack">Attack</button>
+        <button id="dodge">Dodge</button>
+    </div>
+    <script>
+        const gameElement = document.getElementById('game');
+        const guiElement = document.getElementById('gui');
+        const enemyGuiElement = document.getElementById('enemyGui');
+        const closeGuiButton = document.getElementById('closeGui');
+        const attackButton = document.getElementById('attack');
+        const dodgeButton = document.getElementById('dodge');
+        const goldElement = document.getElementById('gold');
+        const grid = [];
+        const rows = 10;
+        const cols = 22;
+        let playerPosition = { x: 5, y: 2 };
+        let chestPosition = { x: 5, y: 3 };
+        let skeletonPosition = { x: 2, y: 5 }; // Skeleton position
+        let gold = 0;
+        let playerHealth = 10;
+        let skeletonHealth = 10;
+        let isDodging = false;
+
+        function initGrid() {
+            for (let i = 0; i < rows; i++) {
+                grid[i] = Array(cols).fill('-');
+            }
+            grid[chestPosition.y][chestPosition.x] = '#';
+            grid[skeletonPosition.y][skeletonPosition.x] = 'R'; // Place skeleton
+            updateGrid();
+        }
+
+        function updateGrid() {
+            for (let i = 0; i < rows; i++) {
+                grid[i].fill('-');
+            }
+            grid[playerPosition.y][playerPosition.x] = '@';
+            if (chestPosition.x !== -1 && chestPosition.y !== -1) {
+                grid[chestPosition.y][chestPosition.x] = '#';
+            }
+            grid[skeletonPosition.y][skeletonPosition.x] = 'R'; // Update skeleton position
+            gameElement.textContent = grid.map(row => row.join('')).join('\n');
+            checkSpecialInteraction();
+            checkEnemyInteraction();
+        }
+
+        function movePlayer(dx, dy) {
+            if (isDodging) return; // Block movement during dodge
+            const newX = playerPosition.x + dx;
+            const newY = playerPosition.y + dy;
+            if (newX >= 0 && newX < cols && newY >= 0 && newY < rows) {
+                playerPosition.x = newX;
+                playerPosition.y = newY;
+                updateGrid();
+            }
+        }
+
+        function checkSpecialInteraction() {
+            const isNearChest = (playerPosition.x === chestPosition.x && Math.abs(playerPosition.y - chestPosition.y) <= 1) ||
+                (playerPosition.y === chestPosition.y && Math.abs(playerPosition.x - chestPosition.x) <= 1);
+            if (isNearChest) {
+                guiElement.style.display = 'block';
+            } else {
+                guiElement.style.display = 'none';
+            }
+        }
+
+        function checkEnemyInteraction() {
+            const isNearEnemy =
+                (Math.abs(playerPosition.x - skeletonPosition.x) <= 1 && Math.abs(playerPosition.y - skeletonPosition.y) <= 1);
+            if (isNearEnemy) {
+                enemyGuiElement.style.display = 'block';
+            } else {
+                enemyGuiElement.style.display = 'none';
+            }
+        }
+
+        function moveSkeleton() {
+            let dx = 0;
+            let dy = 0;
+            if (skeletonPosition.x < playerPosition.x) dx = 1;
+            if (skeletonPosition.x > playerPosition.x) dx = -1;
+            if (skeletonPosition.y < playerPosition.y) dy = 1;
+            if (skeletonPosition.y > playerPosition.y) dy = -1;
+
+            if (skeletonPosition.x + dx !== playerPosition.x || skeletonPosition.y + dy !== playerPosition.y) {
+                skeletonPosition.x += dx;
+                skeletonPosition.y += dy;
+            }
+            updateGrid();
+        }
+
+        function attack() {
+            const isPlayerAttacking = Math.abs(playerPosition.x - skeletonPosition.x) <= 1 && Math.abs(playerPosition.y - skeletonPosition.y) <= 1;
+            const isSkeletonAttacking = Math.abs(skeletonPosition.x - playerPosition.x) <= 1 && Math.abs(skeletonPosition.y - playerPosition.y) <= 1;
+            if (isPlayerAttacking) {
+                const attackArrow = document.createElement('div');
+                attackArrow.classList.add('arrow');
+                attackArrow.textContent = '>';
+                attackArrow.style.top = `${playerPosition.y * 24}px`; // Adjust positioning
+                attackArrow.style.left = `${playerPosition.x * 24}px`;
+                document.body.appendChild(attackArrow);
+                skeletonHealth -= 2; // Player deals 2 damage
+                checkHealth();
+            }
+            if (isSkeletonAttacking) {
+                const attackArrow = document.createElement('div');
+                attackArrow.classList.add('arrow');
+                attackArrow.textContent = '<';
+                attackArrow.style.top = `${skeletonPosition.y * 24}px`; // Adjust positioning
+                attackArrow.style.left = `${skeletonPosition.x * 24}px`;
+                document.body.appendChild(attackArrow);
+                playerHealth -= 2; // Skeleton deals 2 damage
+                checkHealth();
+            }
+        }
+
+        function checkHealth() {
+            if (playerHealth <= 0) {
+                alert("You have been defeated!");
+            }
+            if (skeletonHealth <= 0) {
+                alert("Skeleton defeated!");
+            }
+        }
+
+        function dodge() {
+            if (isDodging) return; // Prevent double dodge
+            isDodging = true;
+            const dodgeDirection = Math.random() < 0.5 ? 1 : -1;
+            const newY = playerPosition.y + dodgeDirection;
+            if (newY >= 0 && newY < rows) {
+                playerPosition.y = newY;
+                updateGrid();
+            }
+            setTimeout(() => {
+                playerPosition.y -= dodgeDirection; // Return to original position
+                updateGrid();
+                isDodging = false;
+            }, 1000); // Return after 1 second
+        }
+
+        closeGuiButton.addEventListener('click', () => {
+            chestPosition = { x: -1, y: -1 }; // Destroy chest
+            gold += Math.floor(Math.random() * 7 + 1);
+            goldElement.textContent = `Gold: ${gold}`;
+            updateGrid();
+        });
+
+        attackButton.addEventListener('click', attack);
+        dodgeButton.addEventListener('click', dodge);
+
+        window.addEventListener('keydown', (event) => {
+            switch (event.key) {
+                case 'ArrowUp':
+                    movePlayer(0, -1);
+                    break;
+                case 'ArrowDown':
+                    movePlayer(0, 1);
+                    break;
+                case 'ArrowLeft':
+                    movePlayer(-1, 0);
+                    break;
+                case 'ArrowRight':
+                    movePlayer(1, 0);
+                    break;
+            }
+        });
+
+        initGrid();
+        setInterval(moveSkeleton, 1000); // Move skeleton every second
+    </script>
+</body>
+</html>
