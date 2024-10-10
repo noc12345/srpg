@@ -17,6 +17,7 @@
             white-space: pre;
             font-size: 24px;
             line-height: 1;
+            position: relative;
         }
         #gui {
             display: none; /* Hidden by default */
@@ -29,42 +30,55 @@
             padding: 20px;
             z-index: 1000;
         }
+        #gold {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            font-size: 18px;
+            color: #333;
+        }
     </style>
 </head>
 <body>
-    <div id="game"></div>
+    <div id="game">
+        <div id="gold">Gold: 0</div> <!-- Display the gold here -->
+    </div>
     <div id="gui">
         <h2>Special GUI</h2>
-        <p>You are near a special character!</p>
-        <button id="closeGui">Close</button>
+        <p>You found a chest!</p>
+        <button id="closeGui">Loot</button>
     </div>
     <script>
         const gameElement = document.getElementById('game');
         const guiElement = document.getElementById('gui');
         const closeGuiButton = document.getElementById('closeGui');
+        const goldElement = document.getElementById('gold');
         const grid = [];
         const rows = 10;
         const cols = 22;
         let playerPosition = { x: 5, y: 2 }; // Updated starting position
-        const specialPosition = { x: 5, y: 3 }; // Special character position
+        let chestPosition = { x: 5, y: 3 }; // Chest position
+        let gold = 0; // Gold variable
 
         function initGrid() {
             for (let i = 0; i < rows; i++) {
                 grid[i] = Array(cols).fill('-');
             }
-            grid[specialPosition.y][specialPosition.x] = 'g'; // Place special character
+            grid[chestPosition.y][chestPosition.x] = '#'; // Place chest at initial position
             updateGrid();
         }
 
         function updateGrid() {
-            // Clear grid and place player and special character
+            // Clear grid and place player
             for (let i = 0; i < rows; i++) {
                 grid[i].fill('-');
             }
-            grid[playerPosition.y][playerPosition.x] = '@';
-            grid[specialPosition.y][specialPosition.x] = '#'; // Keep special character
+            grid[playerPosition.y][playerPosition.x] = '@'; // Place player
+            if (chestPosition.x !== -1 && chestPosition.y !== -1) {
+                grid[chestPosition.y][chestPosition.x] = '#'; // Place chest
+            }
             gameElement.textContent = grid.map(row => row.join('')).join('\n');
-            checkSpecialInteraction(); // Check interaction every update
+            checkSpecialInteraction(); // Check for interaction
         }
 
         function movePlayer(dx, dy) {
@@ -78,11 +92,11 @@
         }
 
         function checkSpecialInteraction() {
-            const isNearSpecial =
-                (playerPosition.x === specialPosition.x && Math.abs(playerPosition.y - specialPosition.y) <= 1) ||
-                (playerPosition.y === specialPosition.y && Math.abs(playerPosition.x - specialPosition.x) <= 1);
+            const isNearChest =
+                (playerPosition.x === chestPosition.x && Math.abs(playerPosition.y - chestPosition.y) <= 1) ||
+                (playerPosition.y === chestPosition.y && Math.abs(playerPosition.x - chestPosition.x) <= 1);
 
-            if (isNearSpecial) {
+            if (isNearChest) {
                 guiElement.style.display = 'block'; // Show GUI
             } else {
                 guiElement.style.display = 'none'; // Hide GUI
@@ -90,8 +104,13 @@
         }
 
         closeGuiButton.addEventListener('click', () => {
+            if (chestPosition.x !== -1 && chestPosition.y !== -1) { // Check if chest exists
+                chestPosition = { x: -1, y: -1 }; // Destroy chest
+                gold += Math.floor(Math.random() * 7 + 1); // Add random gold
+                goldElement.textContent = `Gold: ${gold}`; // Update gold display
+                updateGrid();
+            }
             guiElement.style.display = 'none'; // Hide GUI when button is clicked
-            gold += math.floor(math.random() * 7 + 1);
         });
 
         window.addEventListener('keydown', (event) => {
