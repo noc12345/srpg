@@ -229,7 +229,7 @@
         }
 
         function moveArrow() {
-            if (arrowPosition.x < cols - 1 && grid[arrowPosition.y][arrowPosition.x + 1] === '-') {
+            if (arrowPosition.x < cols - 1 && grid[arrowPosition.y][arrowPosition.x + 1] === '-' || grid[arrowPosition.y][arrowPosition.x + 1] === '@') {
                 grid[arrowPosition.y][arrowPosition.x] = '-'; // Clear arrow from current position
                 if (arrowDirection == 1){
                     if (arrowPosition.x < cols - 1 && grid[arrowPosition.y][arrowPosition.x + 1] === '-'){
@@ -284,7 +284,7 @@
                         startArrowMovement();
                         setTimeout(() => {
                             cooldown = false; // End cooldown after 3 seconds
-                        }, 3000);
+                        }, 2000);
                     }
                     break;
             }
