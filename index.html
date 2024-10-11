@@ -39,6 +39,17 @@
             color: #333;
             z-index: 1001; /* Ensure it's above the game grid */
         }
+        #doorGui {
+            display: none; /* Hidden by default */
+            position: fixed;
+            top: 30%;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: white;
+            border: 1px solid black;
+            padding: 20px;
+            z-index: 1002; /* Ensure it's above the game grid */
+        }
     </style>
 </head>
 <body>
@@ -51,28 +62,37 @@
         <p>You found a chest!</p>
         <button id="closeGui">Loot</button>
     </div>
+    <div id="doorGui">
+        <h2>Door</h2>
+        <p>You found a door. What do you want to do?</p>
+        <button id="openDoor">Open Door</button>
+    </div>
     <script>
         const gameElement = document.getElementById('game');
         const guiElement = document.getElementById('gui');
         const closeGuiButton = document.getElementById('closeGui');
+        const doorGuiElement = document.getElementById('doorGui');
+        const openDoorButton = document.getElementById('openDoor');
         const goldElement = document.getElementById('gold');
         const grid = [];
         const rows = 10;
         const cols = 22;
         let playerPosition = { x: 5, y: 2 }; // Updated starting position
         let chestPosition = { x: 5, y: 3 }; // Chest position
+        let doorPosition = { x: 10, y: 3 }; // Door position
         let gold = 0; // Gold variable
 
         function initGrid() {
             for (let i = 0; i < rows; i++) {
                 grid[i] = Array(cols).fill('-');
             }
-            grid[chestPosition.y][chestPosition.x] = '#'; // Place chest at initial position
+            grid[chestPosition.y][chestPosition.x] = '#'; // Place chest
+            grid[doorPosition.y][doorPosition.x] = 'D'; // Place door
             updateGrid();
         }
 
         function updateGrid() {
-            // Clear grid and place player
+            // Clear grid and place player, chest, and door
             for (let i = 0; i < rows; i++) {
                 grid[i].fill('-');
             }
@@ -80,8 +100,12 @@
             if (chestPosition.x !== -1 && chestPosition.y !== -1) {
                 grid[chestPosition.y][chestPosition.x] = '#'; // Place chest
             }
+            if (doorPosition.x !== -1 && doorPosition.y !== -1) {
+                grid[doorPosition.y][doorPosition.x] = 'D'; // Place door
+            }
             gameElement.textContent = grid.map(row => row.join('')).join('\n');
-            checkSpecialInteraction(); // Check for interaction
+            checkSpecialInteraction(); // Check for chest
+            checkDoorInteraction();    // Check for door
         }
 
         function movePlayer(dx, dy) {
@@ -100,9 +124,21 @@
                 (playerPosition.y === chestPosition.y && Math.abs(playerPosition.x - chestPosition.x) <= 1);
 
             if (isNearChest) {
-                guiElement.style.display = 'block'; // Show GUI
+                guiElement.style.display = 'block'; // Show chest GUI
             } else {
-                guiElement.style.display = 'none'; // Hide GUI
+                guiElement.style.display = 'none'; // Hide chest GUI
+            }
+        }
+
+        function checkDoorInteraction() {
+            const isNearDoor =
+                (playerPosition.x === doorPosition.x && Math.abs(playerPosition.y - doorPosition.y) <= 1) ||
+                (playerPosition.y === doorPosition.y && Math.abs(playerPosition.x - doorPosition.x) <= 1);
+
+            if (isNearDoor) {
+                doorGuiElement.style.display = 'block'; // Show door GUI
+            } else {
+                doorGuiElement.style.display = 'none'; // Hide door GUI
             }
         }
 
@@ -114,6 +150,12 @@
                 updateGrid();
             }
             guiElement.style.display = 'none'; // Hide GUI when button is clicked
+        });
+
+        openDoorButton.addEventListener('click', () => {
+            alert('You opened the door!');
+            // Add any further door-related actions here
+            doorGuiElement.style.display = 'none'; // Hide door GUI after opening
         });
 
         window.addEventListener('keydown', (event) => {
@@ -137,3 +179,4 @@
     </script>
 </body>
 </html>
+
