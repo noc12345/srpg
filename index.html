@@ -30,6 +30,7 @@
             border: 1px solid black;
             padding: 20px;
             z-index: 1000;
+            width: 250px;
         }
         #gold {
             position: fixed;
@@ -71,6 +72,7 @@
         <p>Skeleton is near!</p>
         <button id="attack">Attack</button>
         <button id="dodge">Dodge</button>
+        <div id="combatAnimation"></div>
     </div>
     <script>
         const gameElement = document.getElementById('game');
@@ -79,6 +81,7 @@
         const closeGuiButton = document.getElementById('closeGui');
         const attackButton = document.getElementById('attack');
         const dodgeButton = document.getElementById('dodge');
+        const combatAnimationElement = document.getElementById('combatAnimation');
         const goldElement = document.getElementById('gold');
         const grid = [];
         const rows = 10;
@@ -96,9 +99,7 @@
                 grid[i] = Array(cols).fill('-');
             }
             grid[chestPosition.y][chestPosition.x] = '#';
-            if (skeletonPosition.x !== -1 && skeletonPosition.y !== -1) {
-                grid[skeletonPosition.y][skeletonPosition.x] = 'R'; // Place skeleton
-            }
+            grid[skeletonPosition.y][skeletonPosition.x] = 'R'; // Place skeleton
             updateGrid();
         }
 
@@ -107,12 +108,8 @@
                 grid[i].fill('-');
             }
             grid[playerPosition.y][playerPosition.x] = '@';
-            if (chestPosition.x !== -1 && chestPosition.y !== -1) {
-                grid[chestPosition.y][chestPosition.x] = '#';
-            }
-            if (skeletonPosition.x !== -1 && skeletonPosition.y !== -1) {
-                grid[skeletonPosition.y][skeletonPosition.x] = 'R'; // Update skeleton position
-            }
+            grid[chestPosition.y][chestPosition.x] = '#';
+            grid[skeletonPosition.y][skeletonPosition.x] = 'R'; // Update skeleton position
             gameElement.textContent = grid.map(row => row.join('')).join('\n');
             checkSpecialInteraction();
             checkEnemyInteraction();
@@ -169,23 +166,25 @@
             if (skeletonPosition.x === -1 || skeletonPosition.y === -1) return; // Stop if skeleton is defeated
             const isPlayerAttacking = Math.abs(playerPosition.x - skeletonPosition.x) <= 1 && Math.abs(playerPosition.y - skeletonPosition.y) <= 1;
             const isSkeletonAttacking = Math.abs(skeletonPosition.x - playerPosition.x) <= 1 && Math.abs(skeletonPosition.y - playerPosition.y) <= 1;
+            
             if (isPlayerAttacking) {
                 const attackArrow = document.createElement('div');
                 attackArrow.classList.add('arrow');
                 attackArrow.textContent = '>';
-                attackArrow.style.top = `${playerPosition.y * 24}px`; // Adjust positioning
-                attackArrow.style.left = `${playerPosition.x * 24}px`;
-                document.body.appendChild(attackArrow);
+                attackArrow.style.top = `20px`; // Adjust for animation
+                attackArrow.style.left = `20px`;
+                combatAnimationElement.appendChild(attackArrow);
                 skeletonHealth -= 2; // Player deals 2 damage
                 checkHealth();
             }
+
             if (isSkeletonAttacking) {
                 const attackArrow = document.createElement('div');
                 attackArrow.classList.add('arrow');
                 attackArrow.textContent = '<';
-                attackArrow.style.top = `${skeletonPosition.y * 24}px`; // Adjust positioning
-                attackArrow.style.left = `${skeletonPosition.x * 24}px`;
-                document.body.appendChild(attackArrow);
+                attackArrow.style.top = `50px`; // Adjust for animation
+                attackArrow.style.left = `50px`;
+                combatAnimationElement.appendChild(attackArrow);
                 playerHealth -= 2; // Skeleton deals 2 damage
                 checkHealth();
             }
@@ -217,17 +216,7 @@
                 playerPosition.y -= dodgeDirection; // Return to original position
                 updateGrid();
                 isDodging = false;
-            }, 1000); // Dodge duration
-        }
-
-        function resetGame() {
-            playerHealth = 10;
-            skeletonHealth = 10;
-            playerPosition = { x: 5, y: 2 };
-            skeletonPosition = { x: 2, y: 5 }; // Respawn skeleton
-            chestPosition = { x: 5, y: 3 };
-            gold = 0;
-            updateGrid();
+            }, 1000);
         }
 
         closeGuiButton.addEventListener('click', () => {
