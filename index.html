@@ -231,15 +231,14 @@
         function moveArrow() {
             // Clear arrow from the current position
             grid[arrowPosition.y][arrowPosition.x] = '-';
-
+        
             // Move right (arrowDirection == 1)
             if (arrowDirection == 1) {
                 if (arrowPosition.x < cols - 1 && (grid[arrowPosition.y][arrowPosition.x + 1] === '-' || grid[arrowPosition.y][arrowPosition.x + 1] === '@')) {
                     arrowPosition.x += 1;
                 } else {
-                    // Stop arrow if it hits a wall
                     clearInterval(arrowInterval);
-                    arrowPosition = 0,0;
+                    arrowPosition = null;
                 }
             }
         
@@ -273,12 +272,13 @@
                 }
             }
         
-            // Update arrow on grid or stop
+            // Update grid only if arrowPosition is valid
             if (arrowPosition) {
                 grid[arrowPosition.y][arrowPosition.x] = '*'; // Place arrow in new position
                 updateGrid();
             }
         }
+
 
 
         window.addEventListener('keydown', (event) => {
