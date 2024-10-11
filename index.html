@@ -76,9 +76,9 @@
         const rows = 10;
         const cols = 22;
         let playerPosition = { x: 5, y: 2 };
-        let chestPosition = { x: 5, y: 3 };
+        let chestPosition = { x: 5, y: 4 };
         let skeletonPosition = { x: 2, y: 5 }; // Skeleton position
-        let gold = 0;
+        let gold = 5;
         let playerHealth = 10;
         let skeletonHealth = 5;
 
@@ -97,7 +97,9 @@
             }
             grid[playerPosition.y][playerPosition.x] = '@';
             grid[chestPosition.y][chestPosition.x] = '#';
-            grid[skeletonPosition.y][skeletonPosition.x] = 'R'; // Update skeleton position
+            if (skeletonHealth >= 1) {
+                grid[skeletonPosition.y][skeletonPosition.x] = 'R'; // Update skeleton position
+            } 
             gameElement.textContent = grid.map(row => row.join('')).join('\n');
             checkSpecialInteraction();
             checkEnemyInteraction();
