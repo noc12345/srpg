@@ -83,6 +83,7 @@
         let gold = 0; // Gold variable
         let subGrid = false; // If true, we're using two grids
         let arrowPosition = null; // Position of the arrow (null if not placed)
+        let arrowMoveInterval = null; // Interval ID for moving the arrow
 
         function initGrid() {
             grid = Array.from({ length: rows }, () => Array(cols).fill('-'));
@@ -208,15 +209,7 @@
             updateGrid();
         }
 
-        function resizeGrid(newRows, newCols) {
-            rows = newRows;
-            cols = newCols;
-            playerPosition = { x: Math.min(playerPosition.x, cols - 1), y: Math.min(playerPosition.y, rows - 1) };
-            chestPosition = { x: Math.floor(Math.random() * cols), y: Math.floor(Math.random() * rows) };
-            placeDoorsOnEdges(3);
-            updateGrid();
-        }
-
+        // When space is pressed, start moving the arrow 4 grids to the right slowly
         window.addEventListener('keydown', (event) => {
             switch (event.key) {
                 case 'ArrowUp':
@@ -232,13 +225,22 @@
                     movePlayer(1, 0);
                     break;
                 case ' ':
-                    // Place the arrow and move it 4 grids to the right
+                    // Place the arrow and move it 4 grids to the right slowly
                     if (arrowPosition === null) {
                         arrowPosition = { x: playerPosition.x + 1, y: playerPosition.y };
-                    } else {
-                        arrowPosition.x += 4; // Move the arrow 4 grids to the right
                     }
-                    updateGrid();
+                    // Start the movement if not already moving
+                    if (arrowMoveInterval === null) {
+                        arrowMoveInterval = setInterval(() => {
+                            if (arrowPosition.x < playerPosition.x + 5) {
+                                arrowPosition.x += 1;
+                                updateGrid();
+                            } else {
+                                clearInterval(arrowMoveInterval); // Stop the movement
+                                arrowMoveInterval = null;
+                            }
+                        }, 500); // Move every 500ms (adjust the speed as needed)
+                    }
                     break;
             }
         });
@@ -247,4 +249,3 @@
     </script>
 </body>
 </html>
-
