@@ -63,25 +63,14 @@
     </div>
     <div id="gold">Gold: 0</div>
     <div id="gui">
-        <h2>Special GUI</h2>
+        <h2>chest</h2>
         <p>You found a chest!</p>
         <button id="closeGui">Loot</button>
-    </div>
-    <div id="enemyGui">
-        <h2>Skeleton Encounter</h2>
-        <p>Skeleton is near!</p>
-        <button id="attack">Attack</button>
-        <button id="dodge">Dodge</button>
-        <div id="combatAnimation"></div>
     </div>
     <script>
         const gameElement = document.getElementById('game');
         const guiElement = document.getElementById('gui');
-        const enemyGuiElement = document.getElementById('enemyGui');
         const closeGuiButton = document.getElementById('closeGui');
-        const attackButton = document.getElementById('attack');
-        const dodgeButton = document.getElementById('dodge');
-        const combatAnimationElement = document.getElementById('combatAnimation');
         const goldElement = document.getElementById('gold');
         const grid = [];
         const rows = 10;
@@ -91,8 +80,7 @@
         let skeletonPosition = { x: 2, y: 5 }; // Skeleton position
         let gold = 0;
         let playerHealth = 10;
-        let skeletonHealth = 10;
-        let isDodging = false;
+        let skeletonHealth = 5;
 
         function initGrid() {
             for (let i = 0; i < rows; i++) {
@@ -137,13 +125,7 @@
         }
 
         function checkEnemyInteraction() {
-            const isNearEnemy =
-                (Math.abs(playerPosition.x - skeletonPosition.x) <= 1 && Math.abs(playerPosition.y - skeletonPosition.y) <= 1);
-            if (isNearEnemy) {
-                enemyGuiElement.style.display = 'block';
-            } else {
-                enemyGuiElement.style.display = 'none';
-            }
+           
         }
 
         function moveSkeleton() {
@@ -192,31 +174,13 @@
 
         function checkHealth() {
             if (playerHealth <= 0) {
-                alert("You have been defeated!");
                 resetGame();
             }
             if (skeletonHealth <= 0) {
-                alert("Skeleton defeated!");
                 skeletonPosition = { x: -1, y: -1 }; // Remove skeleton
                 updateGrid();
                 enemyGuiElement.style.display = 'none'; // Close GUI
             }
-        }
-
-        function dodge() {
-            if (isDodging) return; // Prevent double dodge
-            isDodging = true;
-            const dodgeDirection = Math.random() < 0.5 ? 1 : -1;
-            const newY = playerPosition.y + dodgeDirection;
-            if (newY >= 0 && newY < rows) {
-                playerPosition.y = newY;
-                updateGrid();
-            }
-            setTimeout(() => {
-                playerPosition.y -= dodgeDirection; // Return to original position
-                updateGrid();
-                isDodging = false;
-            }, 1000);
         }
 
         closeGuiButton.addEventListener('click', () => {
@@ -226,8 +190,6 @@
             guiElement.style.display = 'none'; // Hide chest GUI
         });
 
-        attackButton.addEventListener('click', attack);
-        dodgeButton.addEventListener('click', dodge);
 
         window.addEventListener('keydown', (event) => {
             switch (event.key) {
