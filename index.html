@@ -79,7 +79,7 @@
         const cols = 22;
         let playerPosition = { x: 5, y: 2 }; // Updated starting position
         let chestPosition = { x: 5, y: 3 }; // Chest position
-        let doorPosition = { x: 10, y: 3 }; // Door position
+        let doorPositions = []; // Array to store multiple door positions
         let gold = 0; // Gold variable
 
         function initGrid() {
@@ -87,12 +87,40 @@
                 grid[i] = Array(cols).fill('-');
             }
             grid[chestPosition.y][chestPosition.x] = '#'; // Place chest
-            grid[doorPosition.y][doorPosition.x] = 'D'; // Place door
+            placeDoorsOnEdges(3); // Place 3 doors on edges (adjust number as needed)
             updateGrid();
         }
 
+        function placeDoorsOnEdges(numberOfDoors) {
+            // Clear previous door positions
+            doorPositions = [];
+            while (doorPositions.length < numberOfDoors) {
+                let edge = Math.floor(Math.random() * 4); // 0: top, 1: bottom, 2: left, 3: right
+                let x, y;
+
+                if (edge === 0) { // Top edge
+                    x = Math.floor(Math.random() * cols);
+                    y = 0;
+                } else if (edge === 1) { // Bottom edge
+                    x = Math.floor(Math.random() * cols);
+                    y = rows - 1;
+                } else if (edge === 2) { // Left edge
+                    x = 0;
+                    y = Math.floor(Math.random() * rows);
+                } else if (edge === 3) { // Right edge
+                    x = cols - 1;
+                    y = Math.floor(Math.random() * rows);
+                }
+
+                // Add the door position to the array if it doesn't overlap with player or chest
+                if (x !== playerPosition.x || y !== playerPosition.y) {
+                    doorPositions.push({ x, y });
+                }
+            }
+        }
+
         function updateGrid() {
-            // Clear grid and place player, chest, and door
+            // Clear grid and place player, chest, and doors
             for (let i = 0; i < rows; i++) {
                 grid[i].fill('-');
             }
@@ -100,9 +128,9 @@
             if (chestPosition.x !== -1 && chestPosition.y !== -1) {
                 grid[chestPosition.y][chestPosition.x] = '#'; // Place chest
             }
-            if (doorPosition.x !== -1 && doorPosition.y !== -1) {
-                grid[doorPosition.y][doorPosition.x] = 'D'; // Place door
-            }
+            doorPositions.forEach(door => {
+                grid[door.y][door.x] = 'D'; // Place doors
+            });
             gameElement.textContent = grid.map(row => row.join('')).join('\n');
             checkSpecialInteraction(); // Check for chest
             checkDoorInteraction();    // Check for door
@@ -131,9 +159,10 @@
         }
 
         function checkDoorInteraction() {
-            const isNearDoor =
-                (playerPosition.x === doorPosition.x && Math.abs(playerPosition.y - doorPosition.y) <= 1) ||
-                (playerPosition.y === doorPosition.y && Math.abs(playerPosition.x - doorPosition.x) <= 1);
+            const isNearDoor = doorPositions.some(door =>
+                (playerPosition.x === door.x && Math.abs(playerPosition.y - door.y) <= 1) ||
+                (playerPosition.y === door.y && Math.abs(playerPosition.x - door.x) <= 1)
+            );
 
             if (isNearDoor) {
                 doorGuiElement.style.display = 'block'; // Show door GUI
@@ -179,4 +208,3 @@
     </script>
 </body>
 </html>
-
