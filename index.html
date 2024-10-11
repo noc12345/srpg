@@ -81,7 +81,8 @@
         let chestPosition = { x: 5, y: 3 }; // Chest position
         let doorPositions = []; // Array to store multiple door positions
         let gold = 0; // Gold variable
-        let subGrid = false; // If true, we're using two grids
+        let lastDirection = null; // To store the last pressed arrow key direction
+        const range = 4; // Number of spaces the arrow should move
 
         function initGrid() {
             grid = Array.from({ length: rows }, () => Array(cols).fill('-'));
@@ -143,84 +144,31 @@
             }
         }
 
-        function checkSpecialInteraction() {
-            const isNearChest =
-                (playerPosition.x === chestPosition.x && Math.abs(playerPosition.y - chestPosition.y) <= 1) ||
-                (playerPosition.y === chestPosition.y && Math.abs(playerPosition.x - chestPosition.x) <= 1);
+        function fireArrow() {
+            let arrowPosition = { x: playerPosition.x, y: playerPosition.y };
 
-            if (isNearChest) {
-                guiElement.style.display = 'block'; // Show chest GUI
-            } else {
-                guiElement.style.display = 'none'; // Hide chest GUI
-            }
-        }
+            for (let i = 1; i <= range; i++) {
+                // Move the arrow based on last direction
+                if (lastDirection === 'up' && arrowPosition.y - 1 >= 0) {
+                    arrowPosition.y--;
+                } else if (lastDirection === 'down' && arrowPosition.y + 1 < rows) {
+                    arrowPosition.y++;
+                } else if (lastDirection === 'left' && arrowPosition.x - 1 >= 0) {
+                    arrowPosition.x--;
+                } else if (lastDirection === 'right' && arrowPosition.x + 1 < cols) {
+                    arrowPosition.x++;
+                }
 
-        function checkDoorInteraction() {
-            const isNearDoor = doorPositions.some(door =>
-                (playerPosition.x === door.x && Math.abs(playerPosition.y - door.y) <= 1) ||
-                (playerPosition.y === door.y && Math.abs(playerPosition.x - door.x) <= 1)
-            );
+                // Display the arrow on the grid
+                grid[arrowPosition.y][arrowPosition.x] = '*'; // Mark arrow position
 
-            if (isNearDoor) {
-                doorGuiElement.style.display = 'block'; // Show door GUI
-            } else {
-                doorGuiElement.style.display = 'none'; // Hide door GUI
-            }
-        }
-
-        closeGuiButton.addEventListener('click', () => {
-            if (chestPosition.x !== -1 && chestPosition.y !== -1) { // Check if chest exists
-                chestPosition = { x: -1, y: -1 }; // Destroy chest
-                gold += Math.floor(Math.random() * 7 + 1); // Add random gold
-                goldElement.textContent = `Gold: ${gold}`; // Update gold display
                 updateGrid();
-            }
-            guiElement.style.display = 'none'; // Hide GUI when button is clicked
-        });
 
-        openDoorButton.addEventListener('click', () => {
-            const randomChoice = Math.random() < 0.5; // 50% chance to create two grids
-            if (randomChoice) {
-                subGrid = true; // Use two grids
-                const newRows1 = Math.floor(Math.random() * 5 + 5); // Grid 1 size (5-10 rows)
-                const newCols1 = Math.floor(Math.random() * 10 + 5); // Grid 1 size (5-15 cols)
-                const newRows2 = Math.floor(Math.random() * 5 + 5); // Grid 2 size (5-10 rows)
-                const newCols2 = Math.floor(Math.random() * 10 + 5); // Grid 2 size (5-15 cols)
-                mergeGrids(newRows1, newCols1, newRows2, newCols2); // Merge two grids
-            } else {
-                subGrid = false; // Use one grid
-                rows = Math.floor(Math.random() * 10 + 5); // Random rows between 5 and 15
-                cols = Math.floor(Math.random() * 15 + 10); // Random cols between 10 and 25
-                resizeGrid(rows, cols);
-            }
-            doorGuiElement.style.display = 'none'; // Hide door GUI after opening
-        });
-
-        function mergeGrids(rows1, cols1, rows2, cols2) {
-            const layout = Math.random() < 0.5; // 50% chance for vertical or horizontal layout
-            rows = layout ? Math.max(rows1, rows2) : rows1 + rows2;
-            cols = layout ? cols1 + cols2 : Math.max(cols1, cols2);
-
-            // Place the player on an edge
-            placePlayerOnEdge();
-
-            chestPosition = { x: Math.floor(Math.random() * cols), y: Math.floor(Math.random() * rows) };
-            placeDoorsOnEdges(3); // Regenerate doors
-
-            updateGrid();
-        }
-
-        function placePlayerOnEdge() {
-            // Randomly place the player on one of the four edges
-            const edge = Math.floor(Math.random() * 4);
-            if (edge === 0) {
-                playerPosition = { x: Math.floor(Math.random() * cols), y: 0 }; // Top edge
-            } else if (edge === 1) {
-                playerPosition = { x: Math.floor(Math.random() * cols), y: rows - 1 }; // Bottom edge
-            } else if (edge === 2) {
-                playerPosition = { x: 0, y: Math.floor(Math.random() * rows) }; // Left edge
-            } else if (edge === 3) {
-                playerPosition = { x: cols - 1, y: Math.floor(Math.random() * rows) }; // Right edge
+                // If we hit the boundary, stop
+                if (arrowPosition.x === 0 || arrowPosition.x === cols - 1 || 
+                    arrowPosition.y === 0 || arrowPosition.y === rows - 1) {
+                    break;
+                }
             }
         }
 
@@ -228,15 +176,24 @@
             switch (event.key) {
                 case 'ArrowUp':
                     movePlayer(0, -1);
+                    lastDirection = 'up';
                     break;
                 case 'ArrowDown':
                     movePlayer(0, 1);
+                    lastDirection = 'down';
                     break;
                 case 'ArrowLeft':
                     movePlayer(-1, 0);
+                    lastDirection = 'left';
                     break;
                 case 'ArrowRight':
                     movePlayer(1, 0);
+                    lastDirection = 'right';
+                    break;
+                case ' ': // Space key
+                    if (lastDirection) {
+                        fireArrow();
+                    }
                     break;
             }
         });
