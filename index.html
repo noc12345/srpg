@@ -16,7 +16,7 @@
         #game {
             white-space: pre;
             font-size: 24px;
-            line-height: 0.8;
+            line-height: 1;
             position: relative;
             margin-right: 120px; /* Adjust margin to make room for the gold display */
         }
@@ -58,14 +58,14 @@
     </div>
     <div id="gold">Gold: 0</div> <!-- Display the gold here, fixed to the top-right -->
     <div id="gui">
-        <h2>chest</h2>
+        <h2>Special GUI</h2>
         <p>You found a chest!</p>
         <button id="closeGui">Loot</button>
     </div>
     <div id="doorGui">
         <h2>Door</h2>
-        <p>You found a door!</p>
-        <button id="openDoor">Enter</button>
+        <p>You found a door. Enter to change the world!</p>
+        <button id="openDoor">Open Door</button>
     </div>
     <script>
         const gameElement = document.getElementById('game');
@@ -200,19 +200,28 @@
             const layout = Math.random() < 0.5; // 50% chance for vertical or horizontal layout
             rows = layout ? Math.max(rows1, rows2) : rows1 + rows2;
             cols = layout ? cols1 + cols2 : Math.max(cols1, cols2);
-            playerPosition = { x: Math.min(playerPosition.x, cols - 1), y: Math.min(playerPosition.y, rows - 1) };
+
+            // Place the player on an edge
+            placePlayerOnEdge();
+
             chestPosition = { x: Math.floor(Math.random() * cols), y: Math.floor(Math.random() * rows) };
             placeDoorsOnEdges(3); // Regenerate doors
+
             updateGrid();
         }
 
-        function resizeGrid(newRows, newCols) {
-            rows = newRows;
-            cols = newCols;
-            playerPosition = { x: Math.min(playerPosition.x, cols - 1), y: Math.min(playerPosition.y, rows - 1) };
-            chestPosition = { x: Math.floor(Math.random() * cols), y: Math.floor(Math.random() * rows) };
-            placeDoorsOnEdges(3); // Regenerate doors
-            updateGrid();
+        function placePlayerOnEdge() {
+            // Randomly place the player on one of the four edges
+            const edge = Math.floor(Math.random() * 4);
+            if (edge === 0) {
+                playerPosition = { x: Math.floor(Math.random() * cols), y: 0 }; // Top edge
+            } else if (edge === 1) {
+                playerPosition = { x: Math.floor(Math.random() * cols), y: rows - 1 }; // Bottom edge
+            } else if (edge === 2) {
+                playerPosition = { x: 0, y: Math.floor(Math.random() * rows) }; // Left edge
+            } else if (edge === 3) {
+                playerPosition = { x: cols - 1, y: Math.floor(Math.random() * rows) }; // Right edge
+            }
         }
 
         window.addEventListener('keydown', (event) => {
