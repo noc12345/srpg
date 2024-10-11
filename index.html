@@ -84,6 +84,7 @@
         let subGrid = false; // If true, we're using two grids
         let arrowPosition = null; // Position of the arrow (null if not placed)
         let arrowMoveInterval = null; // Interval ID for moving the arrow
+        let arrowStartPosition = null; // Captures the player's position when space is pressed
 
         function initGrid() {
             grid = Array.from({ length: rows }, () => Array(cols).fill('-'));
@@ -227,12 +228,13 @@
                 case ' ':
                     // Place the arrow and move it 4 grids to the right slowly
                     if (arrowPosition === null) {
-                        arrowPosition = { x: playerPosition.x + 1, y: playerPosition.y };
+                        arrowStartPosition = { x: playerPosition.x, y: playerPosition.y }; // Capture current player position
+                        arrowPosition = { x: arrowStartPosition.x + 1, y: arrowStartPosition.y };
                     }
                     // Start the movement if not already moving
                     if (arrowMoveInterval === null) {
                         arrowMoveInterval = setInterval(() => {
-                            if (arrowPosition.x < playerPosition.x + 5) {
+                            if (arrowPosition.x < arrowStartPosition.x + 5) { // Move relative to the captured position
                                 arrowPosition.x += 1;
                                 updateGrid();
                             } else {
