@@ -96,7 +96,9 @@
                 grid[i] = Array(cols).fill('-');
             }
             grid[chestPosition.y][chestPosition.x] = '#';
-            grid[skeletonPosition.y][skeletonPosition.x] = 'R'; // Place skeleton
+            if (skeletonPosition.x !== -1 && skeletonPosition.y !== -1) {
+                grid[skeletonPosition.y][skeletonPosition.x] = 'R'; // Place skeleton
+            }
             updateGrid();
         }
 
@@ -108,7 +110,9 @@
             if (chestPosition.x !== -1 && chestPosition.y !== -1) {
                 grid[chestPosition.y][chestPosition.x] = '#';
             }
-            grid[skeletonPosition.y][skeletonPosition.x] = 'R'; // Update skeleton position
+            if (skeletonPosition.x !== -1 && skeletonPosition.y !== -1) {
+                grid[skeletonPosition.y][skeletonPosition.x] = 'R'; // Update skeleton position
+            }
             gameElement.textContent = grid.map(row => row.join('')).join('\n');
             checkSpecialInteraction();
             checkEnemyInteraction();
@@ -146,6 +150,7 @@
         }
 
         function moveSkeleton() {
+            if (skeletonPosition.x === -1 || skeletonPosition.y === -1) return; // Stop if skeleton is defeated
             let dx = 0;
             let dy = 0;
             if (skeletonPosition.x < playerPosition.x) dx = 1;
@@ -161,6 +166,7 @@
         }
 
         function attack() {
+            if (skeletonPosition.x === -1 || skeletonPosition.y === -1) return; // Stop if skeleton is defeated
             const isPlayerAttacking = Math.abs(playerPosition.x - skeletonPosition.x) <= 1 && Math.abs(playerPosition.y - skeletonPosition.y) <= 1;
             const isSkeletonAttacking = Math.abs(skeletonPosition.x - playerPosition.x) <= 1 && Math.abs(skeletonPosition.y - playerPosition.y) <= 1;
             if (isPlayerAttacking) {
@@ -188,9 +194,13 @@
         function checkHealth() {
             if (playerHealth <= 0) {
                 alert("You have been defeated!");
+                resetGame();
             }
             if (skeletonHealth <= 0) {
                 alert("Skeleton defeated!");
+                skeletonPosition = { x: -1, y: -1 }; // Remove skeleton
+                updateGrid();
+                enemyGuiElement.style.display = 'none'; // Close GUI
             }
         }
 
@@ -207,14 +217,24 @@
                 playerPosition.y -= dodgeDirection; // Return to original position
                 updateGrid();
                 isDodging = false;
-            }, 1000); // Return after 1 second
+            }, 1000); // Dodge duration
+        }
+
+        function resetGame() {
+            playerHealth = 10;
+            skeletonHealth = 10;
+            playerPosition = { x: 5, y: 2 };
+            skeletonPosition = { x: 2, y: 5 }; // Respawn skeleton
+            chestPosition = { x: 5, y: 3 };
+            gold = 0;
+            updateGrid();
         }
 
         closeGuiButton.addEventListener('click', () => {
-            chestPosition = { x: -1, y: -1 }; // Destroy chest
-            gold += Math.floor(Math.random() * 7 + 1);
+            chestPosition = { x: -1, y: -1 }; // Remove chest
+            gold += 5;
             goldElement.textContent = `Gold: ${gold}`;
-            updateGrid();
+            guiElement.style.display = 'none'; // Hide chest GUI
         });
 
         attackButton.addEventListener('click', attack);
