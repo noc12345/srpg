@@ -272,13 +272,13 @@
                 }
             }
         
-            // Update grid only if arrowPosition is valid
+            // Update the grid, whether arrow is still moving or has been removed
             if (arrowPosition) {
                 grid[arrowPosition.y][arrowPosition.x] = '*'; // Place arrow in new position
-                updateGrid();
             }
+            
+            updateGrid(); // Always update the grid after the movement or removal
         }
-
 
 
         window.addEventListener('keydown', (event) => {
