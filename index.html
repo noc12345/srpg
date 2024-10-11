@@ -64,7 +64,7 @@
     </div>
     <div id="doorGui">
         <h2>Door</h2>
-        <p>You found a door. What do you want to do?</p>
+        <p>You found a door. Enter to change the world!</p>
         <button id="openDoor">Open Door</button>
     </div>
     <script>
@@ -74,18 +74,17 @@
         const doorGuiElement = document.getElementById('doorGui');
         const openDoorButton = document.getElementById('openDoor');
         const goldElement = document.getElementById('gold');
-        const grid = [];
-        const rows = 10;
-        const cols = 22;
+        let grid = [];
+        let rows = 10;
+        let cols = 22;
         let playerPosition = { x: 5, y: 2 }; // Updated starting position
         let chestPosition = { x: 5, y: 3 }; // Chest position
         let doorPositions = []; // Array to store multiple door positions
         let gold = 0; // Gold variable
 
         function initGrid() {
-            for (let i = 0; i < rows; i++) {
-                grid[i] = Array(cols).fill('-');
-            }
+            // Initialize grid and reset player, chest, and door positions
+            grid = Array.from({ length: rows }, () => Array(cols).fill('-'));
             grid[chestPosition.y][chestPosition.x] = '#'; // Place chest
             placeDoorsOnEdges(3); // Place 3 doors on edges (adjust number as needed)
             updateGrid();
@@ -113,7 +112,8 @@
                 }
 
                 // Add the door position to the array if it doesn't overlap with player or chest
-                if (x !== playerPosition.x || y !== playerPosition.y) {
+                if ((x !== playerPosition.x || y !== playerPosition.y) && 
+                    (x !== chestPosition.x || y !== chestPosition.y)) {
                     doorPositions.push({ x, y });
                 }
             }
@@ -121,9 +121,7 @@
 
         function updateGrid() {
             // Clear grid and place player, chest, and doors
-            for (let i = 0; i < rows; i++) {
-                grid[i].fill('-');
-            }
+            grid = Array.from({ length: rows }, () => Array(cols).fill('-'));
             grid[playerPosition.y][playerPosition.x] = '@'; // Place player
             if (chestPosition.x !== -1 && chestPosition.y !== -1) {
                 grid[chestPosition.y][chestPosition.x] = '#'; // Place chest
@@ -182,10 +180,22 @@
         });
 
         openDoorButton.addEventListener('click', () => {
-            alert('You opened the door!');
-            // Add any further door-related actions here
+            // Randomly change the grid size
+            rows = Math.floor(Math.random() * 10 + 5); // Random rows between 5 and 15
+            cols = Math.floor(Math.random() * 15 + 10); // Random cols between 10 and 25
+            resizeGrid(rows, cols);
             doorGuiElement.style.display = 'none'; // Hide door GUI after opening
         });
+
+        function resizeGrid(newRows, newCols) {
+            // Update rows and cols, keep player position within bounds
+            playerPosition.x = Math.min(playerPosition.x, newCols - 1);
+            playerPosition.y = Math.min(playerPosition.y, newRows - 1);
+
+            chestPosition = { x: Math.floor(Math.random() * newCols), y: Math.floor(Math.random() * newRows) }; // New chest position
+            placeDoorsOnEdges(3); // Place new doors
+            updateGrid(); // Update the grid with the new dimensions
+        }
 
         window.addEventListener('keydown', (event) => {
             switch (event.key) {
