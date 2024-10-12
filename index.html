@@ -128,10 +128,10 @@
             grid = Array.from({ length: rows }, () => Array(cols).fill('-'));
             grid[playerPosition.y][playerPosition.x] = '@'; // Place player
             if (chestPosition.x !== -1 && chestPosition.y !== -1) {
-                grid[chestPosition.y][chestPosition.x] = '#'; // Place chest
+                grid[chestPosition.y][chestPosition.x] = '▣'; // Place chest
             }
             doorPositions.forEach(door => {
-                grid[door.y][door.x] = 'D'; // Place doors
+                grid[door.y][door.x] = '⍈'; // Place doors
             });
             if (arrowPosition) {
                 grid[arrowPosition.y][arrowPosition.x] = '*'; // Place arrow
