@@ -79,7 +79,7 @@
         let rows = 10;
         let cols = 22;
         let playerPosition = { x: 5, y: 2 }; // Updated starting position
-        let chestPosition = { x: 5, y: 5 }; // Chest position
+        let chestPosition = { x: 5, y: 3 }; // Chest position
         let doorPositions = []; // Array to store multiple door positions
         let gold = 0; // Gold variable
         let subGrid = false; // If true, we're using two grids
@@ -181,7 +181,7 @@
             if (chestPosition.x !== -1 && chestPosition.y !== -1) { // Check if chest exists
                 chestPosition = { x: -1, y: -1 }; // Destroy chest
                 gold += Math.floor(Math.random() * 7 + 1); // Add random gold
-                goldElement.textContent = Gold: ${gold}; // Update gold display
+                goldElement.textContent = `Gold: ${gold}`; // Update gold display
                 updateGrid();
             }
             guiElement.style.display = 'none'; // Hide GUI when button is clicked
