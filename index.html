@@ -81,6 +81,7 @@
         let playerPosition = { x: 5, y: 2 }; // Updated starting position
         let chestPosition = { x: 5, y: 3 }; // Chest position
         let doorPositions = []; // Array to store multiple door positions
+        let characterPosition = { x: -1, y: -1 }; // Character '&' position
         let gold = 0; // Gold variable
         let subGrid = false; // If true, we're using two grids
         let cooldown = false; // Cooldown for arrow placement
@@ -93,6 +94,7 @@
             grid = Array.from({ length: rows }, () => Array(cols).fill('-'));
             grid[chestPosition.y][chestPosition.x] = '#'; // Place chest
             placeDoorsOnEdges(3); // Place doors on edges
+            spawnCharacter(); // Spawn the new character
             updateGrid();
         }
 
@@ -125,6 +127,22 @@
             }
         }
 
+        function spawnCharacter() {
+            // Generate a random position for the character that does not overlap with other objects
+            let validPosition = false;
+            while (!validPosition) {
+                let x = Math.floor(Math.random() * cols);
+                let y = Math.floor(Math.random() * rows);
+
+                if ((x !== playerPosition.x || y !== playerPosition.y) &&
+                    (x !== chestPosition.x || y !== chestPosition.y) &&
+                    !doorPositions.some(door => door.x === x && door.y === y)) {
+                    characterPosition = { x, y }; // Set character position
+                    validPosition = true;
+                }
+            }
+        }
+
         function updateGrid() {
             grid = Array.from({ length: rows }, () => Array(cols).fill('-'));
             grid[playerPosition.y][playerPosition.x] = '@'; // Place player
@@ -136,6 +154,9 @@
             });
             if (arrowPosition) {
                 grid[arrowPosition.y][arrowPosition.x] = '*'; // Place arrow
+            }
+            if (characterPosition.x !== -1 && characterPosition.y !== -1) {
+                grid[characterPosition.y][characterPosition.x] = '&'; // Place character
             }
             gameElement.textContent = grid.map(row => row.join('')).join('\n');
             checkSpecialInteraction(); // Check for chest
@@ -188,130 +209,71 @@
         });
 
         openDoorButton.addEventListener('click', () => {
-            const randomChoice = Math.random() < 0.5; // 50% chance to create two grids
-            if (randomChoice) {
-                subGrid = true; // Use two grids
-                const newRows1 = Math.floor(Math.random() * 5 + 5); // Grid 1 size (5-10 rows)
-                const newCols1 = Math.floor(Math.random() * 10 + 5); // Grid 1 size (5-15 cols)
-                const newRows2 = Math.floor(Math.random() * 5 + 5); // Grid 2 size (5-10 rows)
-                const newCols2 = Math.floor(Math.random() * 10 + 5); // Grid 2 size (5-15 cols)
-                mergeGrids(newRows1, newCols1, newRows2, newCols2); // Merge two grids
-            } else {
-                subGrid = false; // Use one grid
-                rows = Math.floor(Math.random() * 10 + 5); // Random rows between 5 and 15
-                cols = Math.floor(Math.random() * 15 + 10); // Random cols between 10 and 25
-                resizeGrid(rows, cols);
-            }
-            doorGuiElement.style.display = 'none'; // Hide door GUI after opening
+            doorGuiElement.style.display = 'none'; // Hide the door GUI
+            // Additional behavior for entering doors can be added here
         });
 
-        function mergeGrids(rows1, cols1, rows2, cols2) {
-            const layout = Math.random() < 0.5; // 50% chance for vertical or horizontal layout
-            rows = layout ? Math.max(rows1, rows2) : rows1 + rows2;
-            cols = layout ? cols1 + cols2 : Math.max(cols1, cols2);
-            playerPosition = { x: Math.min(playerPosition.x, cols - 1), y: Math.min(playerPosition.y, rows - 1) };
-            chestPosition = { x: Math.floor(Math.random() * cols), y: Math.floor(Math.random() * rows) };
-            placeDoorsOnEdges(3); // Regenerate doors
-            updateGrid();
-        }
-
-        function resizeGrid(newRows, newCols) {
-            rows = newRows;
-            cols = newCols;
-            playerPosition = { x: Math.min(playerPosition.x, cols - 1), y: Math.min(playerPosition.y, rows - 1) };
-            chestPosition = { x: Math.floor(Math.random() * cols), y: Math.floor(Math.random() * rows) };
-            placeDoorsOnEdges(3); // Regenerate doors
-            updateGrid();
-        }
-
-        function startArrowMovement() {
-            arrowPosition = { x: playerPosition.x, y: playerPosition.y }; // Place arrow in front of player
-            arrowInterval = setInterval(moveArrow, 50); // Move arrow every 50 ms
-        }
-
-        function moveArrow() {
-            // Clear arrow from the current position
-            grid[arrowPosition.y][arrowPosition.x] = '-';
-        
-            // Move right (arrowDirection == 1)
-            if (arrowDirection == 1) {
-                if (arrowPosition.x < cols - 1 && (grid[arrowPosition.y][arrowPosition.x + 1] === '-' || grid[arrowPosition.y][arrowPosition.x + 1] === '@')) {
-                    arrowPosition.x += 1;
-                } else {
-                    clearInterval(arrowInterval);
-                    arrowPosition = null;
-                }
-            }
-        
-            // Move left (arrowDirection == 2)
-            else if (arrowDirection == 2) {
-                if (arrowPosition.x > 0 && (grid[arrowPosition.y][arrowPosition.x - 1] === '-' || grid[arrowPosition.y][arrowPosition.x - 1] === '@')) {
-                    arrowPosition.x -= 1;
-                } else {
-                    clearInterval(arrowInterval);
-                    arrowPosition = null;
-                }
-            }
-        
-            // Move down (arrowDirection == 3)
-            else if (arrowDirection == 3) {
-                if (arrowPosition.y < rows - 1 && (grid[arrowPosition.y + 1][arrowPosition.x] === '-' || grid[arrowPosition.y + 1][arrowPosition.x] === '@')) {
-                    arrowPosition.y += 1;
-                } else {
-                    clearInterval(arrowInterval);
-                    arrowPosition = null;
-                }
-            }
-        
-            // Move up (arrowDirection == 4)
-            else if (arrowDirection == 4) {
-                if (arrowPosition.y > 0 && (grid[arrowPosition.y - 1][arrowPosition.x] === '-' || grid[arrowPosition.y - 1][arrowPosition.x] === '@')) {
-                    arrowPosition.y -= 1;
-                } else {
-                    clearInterval(arrowInterval);
-                    arrowPosition = null;
-                }
-            }
-        
-            // Update the grid, whether arrow is still moving or has been removed
-            if (arrowPosition) {
-                grid[arrowPosition.y][arrowPosition.x] = '*'; // Place arrow in new position
-            }
-            
-            updateGrid(); // Always update the grid after the movement or removal
-        }
-
-
-        window.addEventListener('keydown', (event) => {
-            switch (event.key) {
+        window.addEventListener('keydown', (e) => {
+            switch (e.key) {
                 case 'ArrowUp':
                     movePlayer(0, -1);
-                    lastdir = 4;
+                    lastdir = 1;
                     break;
                 case 'ArrowDown':
                     movePlayer(0, 1);
-                    lastdir = 3;
+                    lastdir = 2;
                     break;
                 case 'ArrowLeft':
                     movePlayer(-1, 0);
-                    lastdir = 2;
+                    lastdir = 3;
                     break;
                 case 'ArrowRight':
                     movePlayer(1, 0);
-                    lastdir = 1;
+                    lastdir = 4;
                     break;
-                case ' ':
+                case 'a': // Move arrow based on player's direction
                     if (!cooldown) {
-                        cooldown = true; // Start cooldown
-                        arrowDirection = lastdir;
-                        startArrowMovement();
+                        cooldown = true;
+                        if (lastdir == 1) {
+                            arrowPosition = { x: playerPosition.x, y: playerPosition.y - 1 };
+                            arrowDirection = 1;
+                        } else if (lastdir == 2) {
+                            arrowPosition = { x: playerPosition.x, y: playerPosition.y + 1 };
+                            arrowDirection = 2;
+                        } else if (lastdir == 3) {
+                            arrowPosition = { x: playerPosition.x - 1, y: playerPosition.y };
+                            arrowDirection = 3;
+                        } else if (lastdir == 4) {
+                            arrowPosition = { x: playerPosition.x + 1, y: playerPosition.y };
+                            arrowDirection = 4;
+                        }
+                        arrowInterval = setInterval(moveArrow, 100);
                         setTimeout(() => {
-                            cooldown = false; // End cooldown after 3 seconds
-                        }, 2000);
+                            cooldown = false;
+                        }, 2000); // 2-second cooldown for shooting arrows
                     }
                     break;
             }
         });
+
+        function moveArrow() {
+            if (arrowPosition.x < 0 || arrowPosition.x >= cols || arrowPosition.y < 0 || arrowPosition.y >= rows) {
+                clearInterval(arrowInterval);
+                arrowPosition = null;
+                updateGrid();
+            } else {
+                if (arrowDirection == 1) {
+                    arrowPosition.y -= 1;
+                } else if (arrowDirection == 2) {
+                    arrowPosition.y += 1;
+                } else if (arrowDirection == 3) {
+                    arrowPosition.x -= 1;
+                } else if (arrowDirection == 4) {
+                    arrowPosition.x += 1;
+                }
+                updateGrid();
+            }
+        }
 
         initGrid();
     </script>
