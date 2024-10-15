@@ -80,7 +80,6 @@
         let cols = 22;
         let playerPosition = { x: 5, y: 2 }; // Updated starting position
         let chestPosition = { x: 5, y: 3 }; // Chest position
-        let enemyPosition = { x: 5 , y: 4 }
         let doorPositions = []; // Array to store multiple door positions
         let gold = 0; // Gold variable
         let subGrid = false; // If true, we're using two grids
@@ -129,7 +128,6 @@
         function updateGrid() {
             grid = Array.from({ length: rows }, () => Array(cols).fill('-'));
             grid[playerPosition.y][playerPosition.x] = '@'; // Place player
-            grid[enemyPostion.x][enemyPosition.y] = '&'; //Place enemy
             if (chestPosition.x !== -1 && chestPosition.y !== -1) {
                 grid[chestPosition.y][chestPosition.x] = '#'; // Place chest
             }
