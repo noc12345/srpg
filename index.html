@@ -87,6 +87,7 @@
         let arrowInterval; // Interval for moving arrow
         let arrowPosition = null; // Position of the arrow
         let arrowDirection = 1;
+        let lastdir = 1;
 
         function initGrid() {
             grid = Array.from({ length: rows }, () => Array(cols).fill('-'));
@@ -128,10 +129,10 @@
             grid = Array.from({ length: rows }, () => Array(cols).fill('-'));
             grid[playerPosition.y][playerPosition.x] = '@'; // Place player
             if (chestPosition.x !== -1 && chestPosition.y !== -1) {
-                grid[chestPosition.y][chestPosition.x] = '▣'; // Place chest
+                grid[chestPosition.y][chestPosition.x] = '#'; // Place chest
             }
             doorPositions.forEach(door => {
-                grid[door.y][door.x] = '⍈'; // Place doors
+                grid[door.y][door.x] = 'D'; // Place doors
             });
             if (arrowPosition) {
                 grid[arrowPosition.y][arrowPosition.x] = '*'; // Place arrow
@@ -285,23 +286,24 @@
             switch (event.key) {
                 case 'ArrowUp':
                     movePlayer(0, -1);
-                    arrowDirection = 4;
+                    lastdir = 4;
                     break;
                 case 'ArrowDown':
                     movePlayer(0, 1);
-                    arrowDirection = 3;
+                    lastdir = 3;
                     break;
                 case 'ArrowLeft':
                     movePlayer(-1, 0);
-                    arrowDirection = 2;
+                    lastdir = 2;
                     break;
                 case 'ArrowRight':
                     movePlayer(1, 0);
-                    arrowDirection = 1;
+                    lastdir = 1;
                     break;
                 case ' ':
                     if (!cooldown) {
                         cooldown = true; // Start cooldown
+                        arrowDirection = lastdir;
                         startArrowMovement();
                         setTimeout(() => {
                             cooldown = false; // End cooldown after 3 seconds
