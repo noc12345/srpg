@@ -82,18 +82,17 @@
         let chestPosition = { x: 5, y: 3 }; // Chest position
         let doorPositions = []; // Array to store multiple door positions
         let gold = 0; // Gold variable
+        let followerPosition = { x: 5, y: 1 }; // Position of the follower
         let subGrid = false; // If true, we're using two grids
         let cooldown = false; // Cooldown for arrow placement
         let arrowInterval; // Interval for moving arrow
         let arrowPosition = null; // Position of the arrow
         let arrowDirection = 1;
         let lastdir = 1;
-        let npcPosition = { x: Math.floor(Math.random() * cols), y: Math.floor(Math.random() * rows) }; // Simple character position
 
         function initGrid() {
             grid = Array.from({ length: rows }, () => Array(cols).fill('-'));
             grid[chestPosition.y][chestPosition.x] = '#'; // Place chest
-            grid[npcPosition.y][npcPosition.x] = '&'; // Place the NPC
             placeDoorsOnEdges(3); // Place doors on edges
             updateGrid();
         }
@@ -121,8 +120,7 @@
 
                 // Ensure doors do not overlap with player or chest
                 if ((x !== playerPosition.x || y !== playerPosition.y) && 
-                    (x !== chestPosition.x || y !== chestPosition.y) &&
-                    (x !== npcPosition.x || y !== npcPosition.y)) { // Prevent overlap with the NPC
+                    (x !== chestPosition.x || y !== chestPosition.y)) {
                     doorPositions.push({ x, y });
                 }
             }
@@ -131,10 +129,10 @@
         function updateGrid() {
             grid = Array.from({ length: rows }, () => Array(cols).fill('-'));
             grid[playerPosition.y][playerPosition.x] = '@'; // Place player
+            grid[followerPosition.y][followerPosition.x] = 'F'; // Place follower
             if (chestPosition.x !== -1 && chestPosition.y !== -1) {
                 grid[chestPosition.y][chestPosition.x] = '#'; // Place chest
             }
-            grid[npcPosition.y][npcPosition.x] = '&'; // Place NPC character
             doorPositions.forEach(door => {
                 grid[door.y][door.x] = 'D'; // Place doors
             });
@@ -144,6 +142,7 @@
             gameElement.textContent = grid.map(row => row.join('')).join('\n');
             checkSpecialInteraction(); // Check for chest
             checkDoorInteraction();    // Check for door
+            followPlayer(); // Update follower position
         }
 
         function movePlayer(dx, dy) {
@@ -156,40 +155,57 @@
             }
         }
 
-        // Additional functions remain unchanged...
-
-        window.addEventListener('keydown', (event) => {
-            switch (event.key) {
-                case 'ArrowUp':
-                    movePlayer(0, -1);
-                    lastdir = 4;
-                    break;
-                case 'ArrowDown':
-                    movePlayer(0, 1);
-                    lastdir = 3;
-                    break;
-                case 'ArrowLeft':
-                    movePlayer(-1, 0);
-                    lastdir = 2;
-                    break;
-                case 'ArrowRight':
-                    movePlayer(1, 0);
-                    lastdir = 1;
-                    break;
-                case ' ':
-                    if (!cooldown) {
-                        cooldown = true; // Start cooldown
-                        arrowDirection = lastdir;
-                        startArrowMovement();
-                        setTimeout(() => {
-                            cooldown = false; // End cooldown after 3 seconds
-                        }, 2000);
-                    }
-                    break;
+        function followPlayer() {
+            if (followerPosition.x < playerPosition.x) {
+                followerPosition.x += 1; // Move right
+            } else if (followerPosition.x > playerPosition.x) {
+                followerPosition.x -= 1; // Move left
             }
+            if (followerPosition.y < playerPosition.y) {
+                followerPosition.y += 1; // Move down
+            } else if (followerPosition.y > playerPosition.y) {
+                followerPosition.y -= 1; // Move up
+            }
+        }
+
+        function checkSpecialInteraction() {
+            const isNearChest =
+                (playerPosition.x === chestPosition.x && Math.abs(playerPosition.y - chestPosition.y) <= 1) ||
+                (playerPosition.y === chestPosition.y && Math.abs(playerPosition.x - chestPosition.x) <= 1);
+
+            if (isNearChest) {
+                guiElement.style.display = 'block'; // Show chest GUI
+            } else {
+                guiElement.style.display = 'none'; // Hide chest GUI
+            }
+        }
+
+        function checkDoorInteraction() {
+            const isNearDoor = doorPositions.some(door =>
+                (playerPosition.x === door.x && Math.abs(playerPosition.y - door.y) <= 1) ||
+                (playerPosition.y === door.y && Math.abs(playerPosition.x - door.x) <= 1)
+            );
+
+            if (isNearDoor) {
+                doorGuiElement.style.display = 'block'; // Show door GUI
+            } else {
+                doorGuiElement.style.display = 'none'; // Hide door GUI
+            }
+        }
+
+        closeGuiButton.addEventListener('click', () => {
+            if (chestPosition.x !== -1 && chestPosition.y !== -1) { // Check if chest exists
+                chestPosition = { x: -1, y: -1 }; // Destroy chest
+                gold += Math.floor(Math.random() * 7 + 1); // Add random gold
+                goldElement.textContent = `Gold: ${gold}`; // Update gold display
+                updateGrid();
+            }
+            guiElement.style.display = 'none'; // Hide GUI when button is clicked
         });
 
-        initGrid();
-    </script>
-</body>
-</html>
+        openDoorButton.addEventListener('click', () => {
+            const randomChoice = Math.random() < 0.5; // 50% chance to create two grids
+            if (randomChoice) {
+                subGrid = true; // Use two grids
+                const newRows1 = Math.floor(Math.random() * 5 + 5); // Grid 1 size (5-10 rows)
+                const newCols1 = Math.floor(Math
