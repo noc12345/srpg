@@ -65,20 +65,21 @@
         let playerPosition = { x: 5, y: 2 };
         let chestPosition = { x: 5, y: 3 };
         let doorPositions = [];
-        let followerPosition = { x: 0, y: 0 }; // Follower starts at (0, 0)
+        let enemyPosition = { x: 0, y: 0 }; // Enemy starts at (0, 0)
         let gold = 0;
         let cooldown = false;
         let arrowInterval, followInterval;
         let arrowPosition = null;
         let arrowDirection = 1;
         let lastdir = 1;
+        let enemyExists = true; // Track whether enemy is present
 
         function initGrid() {
             grid = Array.from({ length: rows }, () => Array(cols).fill('-'));
             grid[chestPosition.y][chestPosition.x] = '#';
             placeDoorsOnEdges(3);
             updateGrid();
-            startFollowing(); // Start the follower movement
+            startFollowing(); // Start the enemy movement
         }
 
         function placeDoorsOnEdges(numberOfDoors) {
@@ -106,15 +107,17 @@
             doorPositions.forEach(door => {
                 grid[door.y][door.x] = 'D'; // Doors
             });
-            grid[followerPosition.y][followerPosition.x] = '&'; // Follower
+            if (enemyExists) {
+                grid[enemyPosition.y][enemyPosition.x] = '&'; // Enemy if present
+            }
             if (arrowPosition) {
                 grid[arrowPosition.y][arrowPosition.x] = '*'; // Arrow
             }
             gameElement.textContent = grid.map(row => row.join('')).join('\n');
             checkSpecialInteraction();
             checkDoorInteraction();
+            checkArrowHitEnemy(); // Check if the arrow hit the enemy
         }
-
         function movePlayer(dx, dy) {
             const newX = playerPosition.x + dx;
             const newY = playerPosition.y + dy;
@@ -125,62 +128,111 @@
             }
         }
 
-        function startFollowing() {
-            followInterval = setInterval(() => {
-                if (followerPosition.x !== playerPosition.x || followerPosition.y !== playerPosition.y) {
-                    if (followerPosition.x < playerPosition.x) followerPosition.x++;
-                    else if (followerPosition.x > playerPosition.x) followerPosition.x--;
-                    if (followerPosition.y < playerPosition.y) followerPosition.y++;
-                    else if (followerPosition.y > playerPosition.y) followerPosition.y--;
-                    updateGrid();
-                }
-            }, 700); // Moves every 500ms
-        }
-
-        function startArrowMovement() {
-            arrowPosition = { x: playerPosition.x, y: playerPosition.y };
-            arrowInterval = setInterval(moveArrow, 50);
-        }
-
-        function moveArrow() {
-            grid[arrowPosition.y][arrowPosition.x] = '-';
-            if (arrowDirection == 1 && arrowPosition.x < cols - 1) arrowPosition.x++;
-            else if (arrowDirection == 2 && arrowPosition.x > 0) arrowPosition.x--;
-            else if (arrowDirection == 3 && arrowPosition.y < rows - 1) arrowPosition.y++;
-            else if (arrowDirection == 4 && arrowPosition.y > 0) arrowPosition.y--;
-            else { clearInterval(arrowInterval); arrowPosition = null; }
-            if (arrowPosition) grid[arrowPosition.y][arrowPosition.x] = '*';
-            updateGrid();
-        }
-
-        closeGuiButton.addEventListener('click', () => {
-            chestPosition = { x: -1, y: -1 };
-            gold += Math.floor(Math.random() * 7 + 1);
-            goldElement.textContent = `Gold: ${gold}`;
-            updateGrid();
-            guiElement.style.display = 'none';
-        });
-
-        openDoorButton.addEventListener('click', () => {
-            rows = Math.floor(Math.random() * 10 + 5);
-            cols = Math.floor(Math.random() * 15 + 10);
-            playerPosition = { x: Math.min(playerPosition.x, cols - 1), y: Math.min(playerPosition.y, rows - 1) };
-            placeDoorsOnEdges(3);
-            updateGrid();
-            doorGuiElement.style.display = 'none';
-        });
-
         function checkSpecialInteraction() {
-            const isNearChest = (playerPosition.x === chestPosition.x && Math.abs(playerPosition.y - chestPosition.y) <= 1) ||
-                                (playerPosition.y === chestPosition.y && Math.abs(playerPosition.x - chestPosition.x) <= 1);
-            guiElement.style.display = isNearChest ? 'block' : 'none';
+            const isNearChest =
+                (playerPosition.x === chestPosition.x && Math.abs(playerPosition.y - chestPosition.y) <= 1) ||
+                (playerPosition.y === chestPosition.y && Math.abs(playerPosition.x - chestPosition.x) <= 1);
+
+            if (isNearChest) {
+                guiElement.style.display = 'block'; // Show chest GUI
+            } else {
+                guiElement.style.display = 'none'; // Hide chest GUI
+            }
         }
 
         function checkDoorInteraction() {
             const isNearDoor = doorPositions.some(door =>
                 (playerPosition.x === door.x && Math.abs(playerPosition.y - door.y) <= 1) ||
-                (playerPosition.y === door.y && Math.abs(playerPosition.x - door.x) <= 1));
-            doorGuiElement.style.display = isNearDoor ? 'block' : 'none';
+                (playerPosition.y === door.y && Math.abs(playerPosition.x - door.x) <= 1)
+            );
+
+            if (isNearDoor) {
+                doorGuiElement.style.display = 'block'; // Show door GUI
+            } else {
+                doorGuiElement.style.display = 'none'; // Hide door GUI
+            }
+        }
+
+        function checkArrowHitEnemy() {
+            if (arrowPosition && enemyExists && 
+                arrowPosition.x === enemyPosition.x && 
+                arrowPosition.y === enemyPosition.y) {
+                enemyExists = false; // Enemy disappears
+                arrowPosition = null; // Remove arrow
+                updateGrid(); // Update the grid after hit
+            }
+        }
+
+        closeGuiButton.addEventListener('click', () => {
+            if (chestPosition.x !== -1 && chestPosition.y !== -1) {
+                chestPosition = { x: -1, y: -1 }; // Destroy chest
+                gold += Math.floor(Math.random() * 7 + 1); // Add gold
+                goldElement.textContent = `Gold: ${gold}`; // Update gold display
+                updateGrid();
+            }
+            guiElement.style.display = 'none'; // Hide GUI
+        });
+
+        openDoorButton.addEventListener('click', () => {
+            const randomChoice = Math.random() < 0.5; // 50% chance for two grids
+            if (randomChoice) {
+                const newRows1 = Math.floor(Math.random() * 5 + 5);
+                const newCols1 = Math.floor(Math.random() * 10 + 5);
+                const newRows2 = Math.floor(Math.random() * 5 + 5);
+                const newCols2 = Math.floor(Math.random() * 10 + 5);
+                mergeGrids(newRows1, newCols1, newRows2, newCols2);
+            } else {
+                rows = Math.floor(Math.random() * 10 + 5); // Random rows
+                cols = Math.floor(Math.random() * 15 + 10); // Random cols
+                resizeGrid(rows, cols);
+            }
+            doorGuiElement.style.display = 'none'; // Hide door GUI
+        });
+
+        function mergeGrids(rows1, cols1, rows2, cols2) {
+            const layout = Math.random() < 0.5;
+            rows = layout ? Math.max(rows1, rows2) : rows1 + rows2;
+            cols = layout ? cols1 + cols2 : Math.max(cols1, cols2);
+            playerPosition = { x: Math.min(playerPosition.x, cols - 1), y: Math.min(playerPosition.y, rows - 1) };
+            chestPosition = { x: Math.floor(Math.random() * cols), y: Math.floor(Math.random() * rows) };
+            placeDoorsOnEdges(3); // Regenerate doors
+            enemyPosition = getRandomPosition(); // Reset enemy position
+            enemyExists = true; // Make enemy present again
+            updateGrid();
+        }
+
+        function resizeGrid(newRows, newCols) {
+            rows = newRows;
+            cols = newCols;
+            playerPosition = { x: Math.min(playerPosition.x, cols - 1), y: Math.min(playerPosition.y, rows - 1) };
+            chestPosition = { x: Math.floor(Math.random() * cols), y: Math.floor(Math.random() * rows) };
+            placeDoorsOnEdges(3); // Regenerate doors
+            enemyPosition = getRandomPosition(); // Reset enemy position
+            enemyExists = true; // Make enemy present again
+            updateGrid();
+        }
+
+        function getRandomPosition() {
+            let x, y;
+            do {
+                x = Math.floor(Math.random() * cols);
+                y = Math.floor(Math.random() * rows);
+            } while ((x === playerPosition.x && y === playerPosition.y) ||
+                     (x === chestPosition.x && y === chestPosition.y));
+            return { x, y };
+        }
+
+        function startFollowing() {
+            followInterval = setInterval(() => {
+                if (enemyExists) {
+                    if (enemyPosition.x < playerPosition.x) enemyPosition.x++;
+                    else if (enemyPosition.x > playerPosition.x) enemyPosition.x--;
+
+                    if (enemyPosition.y < playerPosition.y) enemyPosition.y++;
+                    else if (enemyPosition.y > playerPosition.y) enemyPosition.y--;
+                }
+                updateGrid(); // Update the grid with the enemy's position
+            }, 1000); // Adjust the interval to control the speed of following
         }
 
         window.addEventListener('keydown', (event) => {
@@ -189,12 +241,14 @@
                 case 'ArrowDown': movePlayer(0, 1); lastdir = 3; break;
                 case 'ArrowLeft': movePlayer(-1, 0); lastdir = 2; break;
                 case 'ArrowRight': movePlayer(1, 0); lastdir = 1; break;
-                case ' ':
+                case ' ': // Shoot arrow
                     if (!cooldown) {
-                        cooldown = true;
+                        cooldown = true; // Start cooldown
                         arrowDirection = lastdir;
                         startArrowMovement();
-                        setTimeout(() => cooldown = false, 2000);
+                        setTimeout(() => {
+                            cooldown = false; // End cooldown after 3 seconds
+                        }, 2000);
                     }
                     break;
             }
